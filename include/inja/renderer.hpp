@@ -92,7 +92,7 @@ class Renderer {
         m_tmp_val = callback(arguments);
         return &m_tmp_val;
       }
-      inja_throw("render_error", "variable '" + static_cast<std::string>(bc.str) + "' not found");
+//      inja_throw("render_error", "variable '" + static_cast<std::string>(bc.str) + "' not found");
       return nullptr;
     }
   }
@@ -196,7 +196,9 @@ class Renderer {
           break;
         }
         case Bytecode::Op::Push: {
-          m_stack.emplace_back(*get_imm(bc));
+          const auto v = get_imm(bc);
+          if (v != nullptr)
+            m_stack.emplace_back(*v);
           break;
         }
         case Bytecode::Op::Upper: {
@@ -515,7 +517,9 @@ class Renderer {
           } else {
             if (!level.values.is_array()) {
               m_loop_stack.pop_back();
-              inja_throw("render_error", "type must be array");
+              i = bc.args;  // ++i in loop will take it past EndLoop
+              break;
+              // inja_throw("render_error", "type must be array");
             }
 
             // list iterator
@@ -568,6 +572,30 @@ class Renderer {
           i = bc.args - 1;  // -1 due to ++i in loop
           break;
         }
+        case Bytecode::Op::CompoundValue: {
+            auto args = get_args(bc);
+            std::string value;
+            for (auto a: args)
+              value += a->get_ref<const std::string&>();
+
+            Bytecode new_bc = bc;
+            new_bc.str = value;
+            new_bc.flags = Bytecode::Flag::ValueLookupPointer;
+            const auto v = get_imm(new_bc);
+            if (v != nullptr)
+              m_stack.emplace_back(*v);
+            break;
+        }
+        case Bytecode::Op::RegexCallback: {
+            auto callback = m_callbacks.find_callback("$", bc.args);
+            if (!callback) {
+              inja_throw("render_error", "regex callback '" + static_cast<std::string>(bc.str) + "' (" + std::to_string(static_cast<unsigned int>(bc.args)) + ") not found");
+            }
+            json result = callback(get_args(bc));
+            pop_args(bc);
+            m_stack.emplace_back(std::move(result));
+            break;
+          }
         default: {
           inja_throw("render_error", "unknown op in renderer: " + std::to_string(static_cast<unsigned int>(bc.op)));
         }

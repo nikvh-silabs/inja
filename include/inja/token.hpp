@@ -41,6 +41,7 @@ struct Token {
     LessThan,            // <
     LessEqual,           // <=
     NotEqual,            // !=
+    RegexVariable,       // $
     Unknown,
     Eof
   } kind {Kind::Unknown};

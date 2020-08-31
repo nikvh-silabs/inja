@@ -101,6 +101,11 @@ struct Bytecode {
     // end a loop
     // args is index of the first bytecode in the loop body
     EndLoop,
+
+    // Do a compound value lookup
+    CompoundValue,
+    // Regex callback
+    RegexCallback,
   };
 
   enum Flag {

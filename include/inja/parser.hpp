@@ -154,7 +154,53 @@ class Parser {
         }
         case Token::Kind::Id:
           get_peek_token();
-          if (m_peek_tok.kind == Token::Kind::LeftParen) {
+          if (m_peek_tok.kind == Token::Kind::LeftBrace) {
+            // Compound Id
+            unsigned int num_args = 2;
+
+            // Push text before compound
+            std::string raw_string {m_tok.text};
+            raw_string = "\"" + raw_string + "\"";
+            tmpl.bytecodes.emplace_back(Bytecode::Op::Push, json::parse(raw_string), Bytecode::Flag::ValueImmediate);
+
+            get_next_token();  // LeftBrace
+            get_next_token();  // Id of compound variable
+
+            if (!parse_expression(tmpl)) {
+                inja_throw("parser_error", "expected expression, got '" + m_tok.describe() + "'");
+            }
+
+            get_next_token();  // Skip the RightBrace
+            while ((m_tok.kind != Token::Kind::ExpressionClose) && (m_tok.kind != Token::Kind::StatementClose)) {
+              ++num_args;
+              if (m_tok.kind == Token::Kind::Id || m_tok.kind == Token::Kind::Unknown)
+              {
+                std::string raw_string {m_tok.text};
+                raw_string = "\"" + raw_string + "\"";
+                tmpl.bytecodes.emplace_back(Bytecode::Op::Push, json::parse(raw_string), Bytecode::Flag::ValueImmediate);
+                get_next_token();
+              }
+              else if (m_tok.kind == Token::Kind::LeftBrace)
+              {
+                get_next_token();  // Id of compound variable
+                if (!parse_expression(tmpl)) {
+                  inja_throw("parser_error", "expected expression, got '" + m_tok.describe() + "'");
+                }
+                get_next_token();  // Skip the RightBrace
+              }
+              else
+              {
+                m_tok.kind = Token::Kind::Id;
+                if ( !parse_expression( tmpl ) )
+                {
+                    inja_throw( "parser_error", "expected expression, got '" + m_tok.describe( ) + "'" );
+                }
+              }
+            }
+
+            tmpl.bytecodes.emplace_back(Bytecode::Op::CompoundValue, num_args);
+            return true;
+          } else if (m_peek_tok.kind == Token::Kind::LeftParen) {
             // function call, parse arguments
             Token func_token = m_tok;
             get_next_token();  // id
@@ -248,6 +294,14 @@ class Parser {
           }
           --brace_level;
           if (brace_level == 0 && bracket_level == 0) goto returnJson;
+          break;
+        case Token::Kind::RegexVariable:
+          get_next_token();  // id
+          if (!parse_expression(tmpl)) {
+            inja_throw("parser_error", "expected expression, got '" + m_tok.describe() + "'");
+          }
+          tmpl.bytecodes.emplace_back(Bytecode::Op::RegexCallback, 1);
+          return true;
           break;
         default:
           if (brace_level != 0) {
