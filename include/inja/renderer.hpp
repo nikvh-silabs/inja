@@ -252,9 +252,15 @@ class Renderer {
           break;
         }
         case Bytecode::Op::First: {
-          auto result = get_args(bc)[0]->front();
+          auto args = get_args(bc);
+          if (!args[0]->is_null())
+          {
+            auto result = args[0]->front();
+            m_stack.emplace_back(result);
+          }
+          else
+            m_stack.emplace_back(json{});
           pop_args(bc);
-          m_stack.emplace_back(result);
           break;
         }
         case Bytecode::Op::Last: {
