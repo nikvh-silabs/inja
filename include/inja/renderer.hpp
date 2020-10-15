@@ -199,6 +199,11 @@ class Renderer {
           const auto v = get_imm(bc);
           if (v != nullptr)
             m_stack.emplace_back(*v);
+          else
+          {
+            m_stack.emplace_back();
+          }
+            
           break;
         }
         case Bytecode::Op::Upper: {
@@ -522,10 +527,7 @@ class Renderer {
             level.map_it = level.map_values.begin();
           } else {
             if (!level.values.is_array()) {
-              m_loop_stack.pop_back();
-              i = bc.args;  // ++i in loop will take it past EndLoop
-              break;
-              // inja_throw("render_error", "type must be array");
+              level.values = json::array({std::move(level.values)});
             }
 
             // list iterator
