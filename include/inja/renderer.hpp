@@ -592,6 +592,8 @@ class Renderer {
             const auto v = get_imm(new_bc);
             if (v != nullptr)
               m_stack.emplace_back(*v);
+            else
+              m_stack.emplace_back();
             break;
         }
         case Bytecode::Op::RegexCallback: {
