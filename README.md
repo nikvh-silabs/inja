@@ -1,4 +1,4 @@
-[<div align="center"><img width="500" src="https://raw.githubusercontent.com/pantor/inja/master/doc/logo.jpg"></div>](https://github.com/pantor/inja/releases)
+[<div align="center"><img width="500" src="https://raw.githubusercontent.com/pantor/inja/master/doc/logo.svg?sanitize=true"></div>](https://github.com/pantor/inja/releases)
 
 <p align="center">
   <a href="https://github.com/pantor/inja/actions">
@@ -8,7 +8,7 @@
   <a href="https://github.com/pantor/inja/actions">
     <img src="https://github.com/pantor/inja/workflows/Documentation/badge.svg" alt="Documentation Status">
   </a>
-  
+
   <a href="https://www.codacy.com/manual/pantor/inja?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pantor/inja&amp;utm_campaign=Badge_Grade">
     <img src="https://app.codacy.com/project/badge/Grade/211718f7a36541819d1244c0e2ee6f08"/>
   </a>
@@ -56,6 +56,10 @@ You can also integrate inja in your project using [Hunter](https://github.com/cp
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg) on your project for external dependencies, then you can use the [inja package](https://github.com/Microsoft/vcpkg/tree/master/ports/inja). Please see the vcpkg project for any issues regarding the packaging.
 
 If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install pantor/inja`. A specific version can be installed with `cget install pantor/inja@v2.1.0`.
+
+On macOS, you can install inja via [Homebrew](https://formulae.brew.sh/formula/inja#default) and `brew install inja`.
+
+If you are using [conda](https://docs.conda.io/en/latest/), you can install the latest version from [conda-forge](https://anaconda.org/conda-forge/inja) with `conda install -c conda-forge inja`.
 
 ## Tutorial
 
@@ -156,17 +160,17 @@ In a loop, the special variables `loop/index (number)`, `loop/index1 (number)`, 
 
 Conditions support the typical if, else if and else statements. Following conditions are for example possible:
 ```.cpp
-// Standard comparisons with variable
-render("{% if time.hour >= 20 %}…{% else if time.hour >= 18 %}…{% endif %}", data); // True
+// Standard comparisons with a variable
+render("{% if time.hour >= 20 %}Serve{% else if time.hour >= 18 %}Make{% endif %} dinner.", data); // Serve dinner.
 
 // Variable in list
-render("{% if neighbour in guests %}…{% endif %}", data); // True
+render("{% if neighbour in guests %}Turn up the music!{% endif %}", data); // Turn up the music!
 
 // Logical operations
-render("{% if guest_count < (3+2) and all_tired %}…{% else %}…{% endif %}", data); // True
+render("{% if guest_count < (3+2) and all_tired %}Sleepy...{% else %}Keep going...{% endif %}", data); // Sleepy...
 
 // Negations
-render("{% if not guest_count %}…{% endif %}", data); // True
+render("{% if not guest_count %}The End{% endif %}", data); // The End
 ```
 
 #### Includes
@@ -318,6 +322,11 @@ Comments can be written with the `{# ... #}` syntax.
 ```.cpp
 render("Hello{# Todo #}!", data); // "Hello!"
 ```
+
+### Exceptions
+
+Inja uses exceptions to handle ill-formed template input. However, exceptions can be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `INJA_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls.
+
 
 ## Supported compilers
 
