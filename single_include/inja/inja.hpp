@@ -3573,7 +3573,8 @@ class Renderer : public NodeVisitor  {
     expression_list.root->accept(*this);
 
     if (json_eval_stack.empty()) {
-      throw_renderer_error("empty expression", expression_list);
+      return {};
+//      throw_renderer_error("empty expression", expression_list);
     } else if (json_eval_stack.size() != 1) {
       throw_renderer_error("malformed expression", expression_list);
     }
@@ -3839,7 +3840,10 @@ class Renderer : public NodeVisitor  {
       const auto id_node = not_found_stack.top();
       not_found_stack.pop();
       json_eval_stack.pop();
-      json_eval_stack.push(&container->at(id_node->name));
+      try {
+        json_eval_stack.push(&container->at(id_node->name));
+      } catch (json::out_of_range&) {
+      }
     } break;
     case Op::At: {
       const auto args = get_arguments<2>(node);
