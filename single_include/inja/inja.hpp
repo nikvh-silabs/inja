@@ -3564,6 +3564,7 @@ class Renderer : public NodeVisitor  {
     }
   }
 
+  template<bool throw_not_found=false>
   const std::shared_ptr<json> eval_expression_list(const ExpressionListNode& expression_list) {
     if (!expression_list.root) {
       throw_renderer_error("empty expression", expression_list);
@@ -3588,7 +3589,10 @@ class Renderer : public NodeVisitor  {
       auto node = not_found_stack.top();
       not_found_stack.pop();
 
-      throw_renderer_error("variable '" + static_cast<std::string>(node->name) + "' not found", *node);
+      if (throw_not_found) {
+        throw_renderer_error("variable '" + static_cast<std::string>(node->name) + "' not found", *node);
+      }
+      return {};
     }
     return std::make_shared<json>(*result);
   }
@@ -4067,6 +4071,10 @@ class Renderer : public NodeVisitor  {
 
   void visit(const ForArrayStatementNode& node) {
     const auto result = eval_expression_list(node.condition);
+    if (!result) {
+      current_loop_data = &json_additional_data["loop"];
+      return;
+    }
     if (!result->is_array()) {
       throw_renderer_error("object must be an array", node);
     }
