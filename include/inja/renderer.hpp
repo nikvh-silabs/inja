@@ -388,7 +388,11 @@ class Renderer : public NodeVisitor  {
       json_eval_stack.push(result_ptr.get());
     } break;
     case Op::Int: {
-      result_ptr = std::make_shared<json>(std::stoi(get_arguments<1>(node)[0]->get_ref<const std::string &>()));
+      const auto& v = get_arguments<1>(node)[0]->get_ref<const std::string &>();
+      if (v[0] == '0' && v[1] == 'x')
+        result_ptr = std::make_shared<json>(std::stoi(v.substr(2), 0, 16));
+      else
+        result_ptr = std::make_shared<json>(std::stoi(v));
       json_tmp_stack.push_back(result_ptr);
       json_eval_stack.push(result_ptr.get());
     } break;
@@ -681,7 +685,7 @@ class Renderer : public NodeVisitor  {
     if (block_it != current_template->block_storage.end()) {
       block_statement_stack.emplace_back(&node);
       block_it->second->block.accept(*this);
-      block_statement_stack.pop_back(); 
+      block_statement_stack.pop_back();
     }
     current_level = old_level;
     current_template = template_stack.back();
