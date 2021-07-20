@@ -3847,10 +3847,13 @@ class Renderer : public NodeVisitor  {
     } break;
     case Op::At: {
       const auto args = get_arguments<2>(node);
+      try {
       if (args[0]->is_object()) {
         json_eval_stack.push(&args[0]->at(args[1]->get<std::string>()));
       } else {
         json_eval_stack.push(&args[0]->at(args[1]->get<int>()));
+      }
+      } catch (json::out_of_range&) {
       }
     } break;
     case Op::Default: {
