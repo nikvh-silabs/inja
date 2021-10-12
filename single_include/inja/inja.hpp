@@ -3880,9 +3880,13 @@ class Renderer : public NodeVisitor  {
       json_eval_stack.push(result_ptr.get());
     } break;
     case Op::ExistsInObject: {
-      const auto args = get_arguments<2>(node);
-      auto &&name = args[1]->get_ref<const std::string &>();
-      result_ptr = std::make_shared<json>(args[0]->find(name) != args[0]->end());
+      try {
+        const auto args = get_arguments<2>(node);
+        auto &&name = args[1]->get_ref<const std::string &>();
+        result_ptr = std::make_shared<json>(args[0]->find(name) != args[0]->end());
+      } catch (inja::RenderError&) {
+        result_ptr = std::make_shared<json>(false);
+      }
       json_tmp_stack.push_back(result_ptr);
       json_eval_stack.push(result_ptr.get());
     } break;
