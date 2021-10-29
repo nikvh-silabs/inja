@@ -4126,6 +4126,10 @@ class Renderer : public NodeVisitor  {
 
   void visit(const ForObjectStatementNode& node) {
     const auto result = eval_expression_list(node.condition);
+    if (!result) {
+      current_loop_data = &json_additional_data["loop"];
+      return;
+    }
     if (!result->is_object()) {
       throw_renderer_error("object must be an object", node);
     }
