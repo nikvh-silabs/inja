@@ -58,11 +58,11 @@ class Renderer : public NodeVisitor  {
   }
 
   void print_json(const std::shared_ptr<json> value) {
-    if (value->is_string()) {
+    if (value->is_null()) {
+    } else if (value->is_string()) {
       *output_stream << value->get_ref<const json::string_t&>();
     } else if (value->is_number_integer()) {
       *output_stream << value->get<const json::number_integer_t>();
-    } else if (value->is_null()) {
     } else {
       *output_stream << value->dump();
     }
@@ -84,17 +84,10 @@ class Renderer : public NodeVisitor  {
     const auto result = json_eval_stack.top();
     json_eval_stack.pop();
 
-    if (!result) {
-      if (not_found_stack.empty()) {
-        throw_renderer_error("expression could not be evaluated", expression_list);
-      }
-
-      auto node = not_found_stack.top();
-      not_found_stack.pop();
-
-      throw_renderer_error("variable '" + static_cast<std::string>(node->name) + "' not found", *node);
-    }
-    return std::make_shared<json>(*result);
+    if (!result)
+      return std::make_shared<json>();
+    else
+      return std::make_shared<json>(*result);
   }
 
   void throw_renderer_error(const std::string &message, const AstNode& node) {
@@ -571,6 +564,10 @@ class Renderer : public NodeVisitor  {
 
   void visit(const ForArrayStatementNode& node) {
     const auto result = eval_expression_list(node.condition);
+    if (result->is_null()) {
+      current_loop_data = &json_additional_data["loop"];
+      return;
+    }
     if (!result->is_array()) {
       throw_renderer_error("object must be an array", node);
     }
@@ -610,6 +607,10 @@ class Renderer : public NodeVisitor  {
 
   void visit(const ForObjectStatementNode& node) {
     const auto result = eval_expression_list(node.condition);
+    if (result->is_null()) {
+      current_loop_data = &json_additional_data["loop"];
+      return;
+    }
     if (!result->is_object()) {
       throw_renderer_error("object must be an object", node);
     }
@@ -649,6 +650,9 @@ class Renderer : public NodeVisitor  {
 
   void visit(const IfStatementNode& node) {
     const auto result = eval_expression_list(node.condition);
+    if (result->is_null()) {
+      return;
+    }
     if (truthy(result.get())) {
       node.true_statement.accept(*this);
     } else if (node.has_false_statement) {
